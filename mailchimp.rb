@@ -5,15 +5,17 @@ class MailChimp
         
     class Api
         APP = RestClient
+        DATA_CENTER = "us19"
+        API_VERSION = "3.0"
         AUTH = {
             Authorization: "Bearer " + ENV["MC_AUTH_TOKEN"],
             Content_Type: "application/json"
         }
-        def get(data_center, api_version, path)
-            APP.get "https://#{data_center}.api.mailchimp.com/#{api_version}/#{path}", AUTH    
+        def get(path)
+            APP.get "https://#{DATA_CENTER}.api.mailchimp.com/#{API_VERSION}/#{path}", AUTH    
         end
-        def post(data_center,api_version,path)
-            APP.post "https://#{data_center}.api.mailchimp.com/#{api_version}/#{path}", AUTH
+        def post(path)
+            APP.post "https://#{DATA_CENTER}.api.mailchimp.com/#{API_VERSION}/#{path}", AUTH
         end
     end
 
@@ -21,7 +23,7 @@ class MailChimp
 
         def get_contact_info()
             api = Api.new
-            data = api.get("us19","3.0","")
+            data = api.get("")
             data = JSON.parse(data)
             contact = data["contact"]
             return {
