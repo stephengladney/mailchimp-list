@@ -2,6 +2,12 @@ require "rest-client"
 require "json"
 
 class MailChimp
+
+    # def initialize(data_center, api_version, language)
+    #     DATA_CENTER = data_center
+    #     API_VERSION = api_version
+    #     LANGUAGE = language
+    # end
         
     class Api
         APP = RestClient
@@ -14,8 +20,8 @@ class MailChimp
         def get(path)
             APP.get "https://#{DATA_CENTER}.api.mailchimp.com/#{API_VERSION}/#{path}", AUTH    
         end
-        def post(path)
-            APP.post "https://#{DATA_CENTER}.api.mailchimp.com/#{API_VERSION}/#{path}", AUTH
+        def post(path, payload)
+            APP.post "https://#{DATA_CENTER}.api.mailchimp.com/#{API_VERSION}/#{path}", payload, AUTH
         end
     end
 
@@ -40,15 +46,55 @@ class MailChimp
     end
 
     class List
-        def create()
+
+        def create(list_name, permission_reminder, email_subject)
+            user = User.new
+            user_contact_info = user.get_contact_info()
+            api = Api.new
+            api.post("lists", 
+            {
+                name: list_name,
+                contact: {
+                    company: user_contact_info[:company],
+                    address1: user_contact_info[:address1],
+                    city: user_contact_info[:city],
+                    state: user_contact_info[:state],
+                    zip: user_contact_info[:zip],
+                    country: user_contact_info[:country]
+                },
+                "permission_reminder": permission_reminder,
+                campaign_defaults: {
+                    from_name: user_contact_info[:from_name],
+                    from_email: user_contact_info[:from_email],
+                    subject: email_subject,
+                    language: "english"
+                },
+                email_type_option: false
+            }.to_json)
         end
-        def get_id_by_name()
+
+        def find_by_name(search_string)
+            api = Api.new
+            data = JSON.parse(api.get("lists"))
+            lists = data["lists"]
+            found_list = lists.select{|i| i["name"].include? search_string}
+            if found_list.length > 1
+                return "Multiple lists found. Narrow search"
+            elsif found_list.length == 1
+                return found_list[0]["id"]
+            elsif found_list.length == 0
+                return "List not found"
+            end
         end
-        def add_field()
+
+        def add_field(list_id, field_name, field_type)
+            api = Api.new
+            api.post("lists/#{list_id}/merge-fields",
+            {
+                name: field_name,
+                type: field_type
+        }.to_json)
         end
 
     end
 end
-
-user = MailChimp::User.new
-puts user.get_contact_info()
