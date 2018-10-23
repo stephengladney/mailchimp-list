@@ -17,19 +17,18 @@ class MailChimp
             Authorization: "Bearer " + ENV["MC_AUTH_TOKEN"],
             Content_Type: "application/json"
         }
-        def get(path)
+        def self.get(path)
             APP.get "https://#{DATA_CENTER}.api.mailchimp.com/#{API_VERSION}/#{path}", AUTH    
         end
-        def post(path, payload)
+        def self.post(path, payload)
             APP.post "https://#{DATA_CENTER}.api.mailchimp.com/#{API_VERSION}/#{path}", payload, AUTH
         end
     end
 
     class User
 
-        def get_contact_info()
-            api = Api.new
-            data = api.get("")
+        def self.get_contact_info()
+            data = Api.get("")
             data = JSON.parse(data)
             contact = data["contact"]
             return {
@@ -47,11 +46,9 @@ class MailChimp
 
     class List
 
-        def create(list_name, permission_reminder, email_subject)
-            user = User.new
-            user_contact_info = user.get_contact_info()
-            api = Api.new
-            api.post("lists", 
+        def self.create(list_name, permission_reminder, email_subject)
+            user_contact_info = User.get_contact_info()
+            Api.post("lists", 
             {
                 name: list_name,
                 contact: {
@@ -73,9 +70,8 @@ class MailChimp
             }.to_json)
         end
 
-        def find_by_name(search_string)
-            api = Api.new
-            data = JSON.parse(api.get("lists"))
+        def self.find_by_name(search_string)
+            data = JSON.parse(Api.get("lists"))
             lists = data["lists"]
             found_list = lists.select{|i| i["name"].include? search_string}
             if found_list.length > 1
@@ -87,9 +83,8 @@ class MailChimp
             end
         end
 
-        def add_field(list_id, field_name, field_type)
-            api = Api.new
-            api.post("lists/#{list_id}/merge-fields",
+        def self.add_field(list_id, field_name, field_type)
+            Api.post("lists/#{list_id}/merge-fields",
             {
                 name: field_name,
                 type: field_type
@@ -98,3 +93,5 @@ class MailChimp
 
     end
 end
+
+MailChimp::List.add_field("4bf21a77e6", "derp_field", "text")
